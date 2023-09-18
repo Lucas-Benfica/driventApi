@@ -72,14 +72,15 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
   enrollment.birthday = new Date(enrollment.birthday);
   const address = getAddressForUpsert(params.address);
 
-  const { cep } = params.address;
-  const validCep = getAddressFromCEP(cep);
-  if (!validCep) throw badRequestCepError();
-
-  // Verificar se o CEP é válido antes de associar ao enrollment.
+  if (!params.address.cep || params.address.cep === '') {
+    throw badRequestCepError();
+  }
+  const result = (await request.get(`${process.env.VIA_CEP_API}/${params.address.cep}/json/`)).data as AddressType;
+  if (result.erro) {
+    throw badRequestCepError();
+  }
 
   const newEnrollment = await enrollmentRepository.upsert(params.userId, enrollment, exclude(enrollment, 'userId'));
-
   await addressRepository.upsert(newEnrollment.id, address, address);
 }
 

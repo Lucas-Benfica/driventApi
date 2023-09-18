@@ -1,9 +1,10 @@
 import { Address, Enrollment } from '@prisma/client';
 import { request } from '@/utils/request';
-import { notFoundError } from '@/errors';
+import { requestError } from '@/errors';
 import { addressRepository, CreateAddressParams, enrollmentRepository, CreateEnrollmentParams } from '@/repositories';
 import { exclude } from '@/utils/prisma-utils';
 import { badRequestCepError } from '@/errors/bad-request-error';
+import httpStatus from 'http-status';
 
 interface AddressType {
   cep: string;
@@ -21,22 +22,23 @@ interface AddressType {
 
 // Receber o CEP por parâmetro nesta função.
 async function getAddressFromCEP(cep: string) {
-  
-  if(!cep || cep=="" ) throw badRequestCepError();
+  if (!cep || cep == '') {
+    throw badRequestCepError();
+  }
 
   const result = (await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`)).data as AddressType;
 
-  const {logradouro, complemento, bairro, localidade, uf, erro} = result;
+  const { logradouro, complemento, bairro, localidade, uf, erro } = result;
 
   const newAdress = {
     logradouro,
     complemento,
     bairro,
     cidade: localidade,
-    uf
+    uf,
   };
 
-  if(erro) throw badRequestCepError();
+  if (erro) throw badRequestCepError();
 
   return newAdress;
 }
@@ -44,7 +46,7 @@ async function getAddressFromCEP(cep: string) {
 async function getOneWithAddressByUserId(userId: number): Promise<GetOneWithAddressByUserIdResult> {
   const enrollmentWithAddress = await enrollmentRepository.findWithAddressByUserId(userId);
 
-  if (!enrollmentWithAddress) throw notFoundError();
+  if (!enrollmentWithAddress) throw requestError(httpStatus.BAD_REQUEST, "Bad request");
 
   const [firstAddress] = enrollmentWithAddress.Address;
   const address = getFirstAddress(firstAddress);
@@ -72,7 +74,7 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
 
   const { cep } = params.address;
   const validCep = getAddressFromCEP(cep);
-  if(!validCep) throw badRequestCepError();
+  if (!validCep) throw badRequestCepError();
 
   // Verificar se o CEP é válido antes de associar ao enrollment.
 

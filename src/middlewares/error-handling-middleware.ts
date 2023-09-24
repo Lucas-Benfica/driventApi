@@ -38,6 +38,12 @@ export function handleApplicationErrors(
     });
   }
 
+  if (err.name === 'NotFoundErrorTickets') {
+    return res.status(httpStatus.NOT_FOUND).send({
+      message: err.message,
+    });
+  }
+
   if (err.name === 'DuplicatedEmailError') {
     return res.status(httpStatus.CONFLICT).send({
       message: err.message,

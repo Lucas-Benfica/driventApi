@@ -16,7 +16,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await cleanDb();
 })
-afterAll(async () => {
+afterEach(async () => {
     await cleanDb();
 });
 
@@ -102,27 +102,25 @@ describe("GET /hotels", () => {
 
         it('should respond with status 200 and with hotels data', async () => {
             const hotel = await createHotel();
-
-            const newUser = await createUser();
-            const token = await generateValidToken(newUser);
-            const enrollment = await createEnrollmentWithAddress(newUser);
-            const ticketType = await createTicketType();
+            const user = await createUser();
+            const token = await generateValidToken(user);
+            const enrollment = await createEnrollmentWithAddress(user);
+            const ticketType = await createTicketType(true);
             await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
-
-            const result = await server.get('/hotels').set('Authorization', `Bearer ${token}`);
-
-            expect(result.status).toBe(httpStatus.OK);
-
-            expect(result.body).toEqual([
-                {
-                    id: hotel.id,
-                    name: hotel.name,
-                    image: hotel.image,
-                    createdAt: hotel.createdAt.toISOString(),
-                    updatedAt: hotel.updatedAt.toISOString(),
-                }
-            ])
-        });
+      
+            const response = await server.get('/hotels').set('Authorization', `Bearer ${token}`);
+      
+            expect(response.status).toBe(httpStatus.OK);
+            expect(response.body).toEqual([
+              {
+                id: hotel.id,
+                name: hotel.name,
+                image: hotel.image,
+                createdAt: hotel.createdAt.toISOString(),
+                updatedAt: hotel.updatedAt.toISOString(),
+              },
+            ]);
+          });
     });
 })
 
@@ -213,36 +211,34 @@ describe('GET /hotels/:hotelId', () => {
         });
 
         it('should respond with status 200 and with hotel rooms data', async () => {
-            const newUser = await createUser();
-            const token = await generateValidToken(newUser);
-            const enrollment = await createEnrollmentWithAddress(newUser);
+            const user = await createUser();
+            const token = await generateValidToken(user);
+            const enrollment = await createEnrollmentWithAddress(user);
             const ticketType = await createTicketType(true);
             await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
             const hotel = await createHotel();
             const room = await createRoom(hotel.id);
-
-
-            const result = await server.get(`/hotels/${hotel.id}`).set('Authorization', `Bearer ${token}`);;
-
-            expect(result.status).toBe(httpStatus.OK);
-
-            expect(result.body).toEqual({
-                id: hotel.id,
-                name: hotel.name,
-                image: hotel.image,
-                createdAt: hotel.createdAt.toISOString(),
-                updatedAt: hotel.updatedAt.toISOString(),
-                Rooms: [
-                    {
-                        id: room.id,
-                        name: room.name,
-                        capacity: room.capacity,
-                        hotelId: room.hotelId,
-                        createdAt: room.createdAt.toISOString(),
-                        updatedAt: room.updatedAt.toISOString(),
-                    },
-                ],
+      
+            const response = await server.get(`/hotels/${hotel.id}`).set('Authorization', `Bearer ${token}`);
+      
+            expect(response.status).toBe(httpStatus.OK);
+            expect(response.body).toEqual({
+              id: hotel.id,
+              name: hotel.name,
+              image: hotel.image,
+              createdAt: hotel.createdAt.toISOString(),
+              updatedAt: hotel.updatedAt.toISOString(),
+              Rooms: [
+                {
+                  id: room.id,
+                  name: room.name,
+                  capacity: room.capacity,
+                  hotelId: room.hotelId,
+                  createdAt: room.createdAt.toISOString(),
+                  updatedAt: room.updatedAt.toISOString(),
+                },
+              ],
             });
-        });
+          });
     });
 });

@@ -28,6 +28,10 @@ async function ticketErrorHandler(userId: number) {
     if (!ticket) throw notFoundError('No ticket from user enrollment');
 
     if(ticket.status !== 'PAID') throw paymentError();
+
+    const ticketType = await ticketsRepository.findTicketTypeById(ticket.ticketTypeId);
+    if (!ticketType.includesHotel || ticketType.isRemote ) throw paymentError();
+
 }
 
 export const hotelsService = {

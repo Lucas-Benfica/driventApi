@@ -6,17 +6,17 @@ import { bookingRepository } from "@/repositories/booking-repository";
 
 async function getUserBooking(userId: number) {
   const result = await bookingRepository.getByUserId(userId);
-  if(!result) throw notFoundError('Booking not found');
+  if (!result) throw notFoundError('Booking not found');
   delete result.userId, result.createdAt, result.updatedAt, result.roomId;
   return result;
 }
 
 async function createBooking(roomId: number, userId: number) {
   const room = await bookingRepository.roomIdExists(roomId);
-  if(!room) throw notFoundError('Room not found');
-  if(room.Booking.length >= room.capacity) throw forbiddenError('Romm is full');
+  if (!room) throw notFoundError('Room not found');
+  if (room.Booking.length >= room.capacity) throw forbiddenError('Romm is full');
   const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
-  if(!enrollment) throw forbiddenError('Enrollment not found');
+  if (!enrollment) throw forbiddenError('Enrollment not found');
   const ticket = await ticketsRepository.findTicketByEnrollmentId(enrollment.id);
 
   if (!ticket) throw forbiddenError('Ticket not found');
